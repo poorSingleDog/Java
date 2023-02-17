@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset = utf-8"/>
+    <title>WebSocket客户端</title>
+    <script type="text/javascript">
+        var socket;
+        if(!window.WebSocket){
+            window.WebSocket = window.MozWebSocket;
+        }
+
+        if(window.WebSocket){
+            socket = new WebSocket("ws://localhost:8888/websocket");
+            socket.onmessage = function(event){
+                var ta = document.getElementById('responseContent');
+                ta.value += event.data + "\r\n";
+            };
+
+            socket.onopen = function(event){
+                var ta = document.getElementById('responseContent');
+                ta.value = "你当前的浏览器支持WebSocket,请进行后续操作\r\n";
+            };
+
+            socket.onclose = function(event){
+                var ta = document.getElementById('responseContent');
+                ta.value = "";
+                ta.value = "WebSocket连接已经关闭\r\n";
+            };
+        }else{
+            alert("您的浏览器不支持WebSocket");
+        }
+
+
+        function send(message){
+            if(!window.WebSocket){
+                return;
+            }
+            if(socket.readyState == WebSocket.OPEN){
+                socket.send(message);
+            }else{
+                alert("WebSocket连接没有建立成功！！");
+            }
+        }
+    </script>
+</head>
+<body>
+<H3>及时唠嗑</H3>
+<div name="userId" th:text="${username}"></div>
+<form onSubmit="return false;">
+    <input type = "text" name = "senderId" placeholder="发送者唯一id" th:value="${senderId}"/>
+    <br/><br/>
+    <input type = "text" name = "receiverId" placeholder="接收者唯一id"/>
+    <br/><br/>
+    <input type = "text" name = "message" placeholder="消息内容"/>
+    <br/><br/>
+    <input type = "button" value = "发送WebSocket请求消息" onClick = "send(this.form.senderId.value+','+this.form.receiverId.value+','+this.form.message.value)"/>
+    <hr color="red"/>
+    <h2>客户端接收到服务端返回的应答消息</h2>
+    <textarea id = "responseContent" style = "width:1024px; height:300px"></textarea>
+</form>
+<!--
+<form action="/file-action" method="post" enctype="multipart/form-data">
+    用户名：<input type="text" name="username" th:value="${file_sender}"/><br>
+    文件：<input type="file" name="file"><br>
+    <input type="submit" value="提交">
+</form>
+-->
+
+<form enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="upload_name">名称</label>
+        <div class="col-sm-10">
+            <input type="text" class="form-control" id="upload_name" placeholder="请输入名称">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="testfile">上传文件</label>
+        <div class="col-sm-10">
+            <input type="file" accept="image/*" id="testfile">
+            <!--多文件上传:<input type="file" accept=".xlsx" id="testfile" multiple="multiple"/> -->
+        </div>
+    </div>
+</form>
+
+<input type="button" class="submit" value="上传">
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script>
+    $('.submit').click(function () {
+        var files = $('#testfile').prop('files');
+        var name = $.trim($('#upload_name').val());
+        if (files.length <= 0) {
+            alert("请选择文件");
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append("testfile", files[0]);
+        // 多文件上传需要给参数名称后面加上[]
+        // formData.append("testfile[]", files[1]);
+        formData.append("name", name);
+
+        $.ajax({
+            url:'/file-action',
+            type:'POST',
+            async: false,
+            data: formData,
+            dataType:'json',
+            cache: false, // 上传文件无需缓存
+            processData : false, // 使数据不做处理
+            contentType : false, // 不要设置Content-Type请求头
+            success: function(data){
+                alert(JSON.stringify(data));
+            },
+            error:function(response){
+                alert('错误！');
+            }
+        });
+    })
+</script>
+
+</body>
+</html>
